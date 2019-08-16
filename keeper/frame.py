@@ -1,16 +1,20 @@
-import json
 from .errors import *
 
+
 class Frame:
-    _fields = {'vin', 'speed', 'longitude', 'lattitude'}
+    _fields = {'vin', 'speed', 'longitude', 'latitude'}
 
-    def init(self, data):
-        try:
-            chunks = json.loads(data.decode("utf-8").replace("][", ","))
-        except Exception as e:
-            raise Exception
+    def __init__(self, raw):
+        if not isinstance(raw, (dict, list, tuple)):
+            raise KeeperFrameTypeError()
 
-        return [chunk for chunk in chunks if self._is_valid(chunk)]
+        if isinstance(raw, dict):
+            raw = [raw]
 
-    def _is_valid(self, chunk):
-        return self._fields.issubset(chunk.keys())
+        self._data = (bit for bit in raw if self._is_valid(bit))
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def _is_valid(self, bit):
+        return self._fields.issubset(bit.keys())

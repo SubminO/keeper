@@ -1,0 +1,160 @@
+##################
+### 25.03.2019 ###
+##################
+
+# https://trytoguide.me/post/21
+# http://devacademy.ru/posts/vvedenie-v-redis-py/
+r = redis.Redis( connection_pool = app.pool )
+
+### MAIN LOOP
+try:
+    frame = init_frame(data)
+
+    vin = str(frame["vin"])
+
+    if vin in vehicles:
+        if !vehicles[vin]["route_detected"]:
+            detect_route(vehicles[vin], frame)
+    else:
+        vehicles[sys.intern(vin)] = init_vehicle(frame)
+
+    # только для ТС с определенным маршрутом можно проверять маршрут и остановки
+    if vehicles[vin]['route_detected'] and len(vehicles[vin]['route']) == 1:
+        check_route(vehicles[vin], frame)
+        check_platform(vehicles[vin], frame)
+
+        check_direction(vehicles[vin], frame)
+except:
+    <EXCEPTION_CODE>
+
+============================================
+
++ init_frame(data)
++ detect_route(vehicles[vin], data)
++ init_vehicle(data)
++ check_route(vehicles[vin], data)
+check_platform(vehicles[vin], data)
+check_direction(vehicles[vin], data)
+
+def init_frame(vehicle, data):
+    if type(data) != dict:
+        raise VehicleDataframeError("Dataframe error. Does not match allowed data types")
+
+    for field in app.config.dataframe.fields.values():
+        if field not in data:
+            raise VehicleDataframeError("Dataframe error. Field {} is required".format(field))
+
+    around = dict()
+    for point in [point.split('_') for point in set(r.georadius(app.config.location, frame['lon"], frame["lat"], app.config.radius, app.config.unit, sort='ASC'))]:
+        if point[0] not in araound:
+            around[point[0]] = dict()
+        if point[1] not in around[point[0]]:
+            around[point[0]][point[1]] = list()
+        around[point[0]][point[1]].append(int(point[2]))
+
+    return {
+        'vin': data[app.config.dataframe.fields['vin_name']],
+        'lon': data[app.config.dataframe.fields['long_name']],
+        'lat': data[app.config.dataframe.fields['lat_name']],
+        'speed': data[app.config.dataframe.fields['speed_name']],
+        'around': around
+    }
+
+def init_vehicle(frame):
+    return {
+        sys.intern('route'): set(frame['around'].keys()),
+
+        sys.intern('route_violation'): 0,
+        sys.intern('platform_violation'): 0,
+
+        sys.intern('route_violation'): 0,
+        sys.intern('platform_violation'): 0,
+
+        sys.intern('yaw_violation'): 0,
+
+        sys.intern('prev_route_point') = 0
+        sys.intern('prev_platform_point') = 0
+        sys.intern('route_detected'): 0,
+        sys.intern('state'): None,
+        sys.intern('prev_point'): None,
+        sys.intern('prev_platform'): None,
+        sys.intern('lon'): frame['lon'],
+        sys.intern('lat'): frame['lat'],
+        sys.intern('speed'): frame['speed']
+    }
+
+# проверка на следование маршрутом
+def check_route(vehicle, frame):
+    if vehicle["vin"] != frame["vin"]:
+        raise VehicleDataframeError("Dataframe does not match the vehicle")
+
+    route = list(vehicle['route'])[0]
+    route_points = filter(
+        lambda x: x > vehicle['prev_route_point'],
+        frame['around']['route'][route])
+    len_route_points = len(route_points)
+
+    # вокруг точек нет, кол-во нарушений не превысило критический порог
+    if len_route_points < 1 and vehicle["route_violation"] < app.config.max_route_violations:
+        vehicle["route_violation"]++
+    # вокруг точек нет, кол-во нарушений превысило критический порог
+    else if len_route_points < 1 and vehicle["route_violation"] >= app.config.max_route_violations:
+        raise VehicleRouteError("Route violation detected")
+    # ТС вернкулось на маршрут, сброс счетчика нарушений
+    else if len_route_points >= 1 and vehicle["route_violation"] > 0:
+        if app.config.route_violation_strategy == "FAST":
+            vehicle["route_violation"] = 0
+        else:
+            vehicle["route_violation"]--
+
+    if len_route_points >= 1 and route_points[0] < vehicle['prev_route_point']:
+        if len_route_points >= 2 and route_points[1] < vehicle['prev_route_point']:
+        vehicle["direction_violation"] < app.config.max_direction_violations:
+        vehicle["direction_violation"]++
+
+    vehicle['prev_route_point'] = frame['around']['route'][route][0]
+
+
+def detect_route(vehicle, frame):
+    if vehicle["vin"] != frame["vin"]:
+        raise VehicleDataframeError("Dataframe does not match the vehicle")
+
+    belong = vehicle["route"].isdisjoint(set(frame['around']['route'].keys()))
+
+    # маршрут не определен, кол-во нарушений не превысило критический порог
+    if belong and vehicle["route_violation"] < app.config.max_route_violations:
+        vehicle["route_violation"]++
+    # маршрут не определен, кол-во нарушений превысило критический порог
+    else if belong and vehicle["route_violation"] >= app.config.max_route_violations:
+        raise VehicleRouteDetectError("Route detection error")
+
+    vehicle['route'] = vehicle['route'] & frame['around']['route'].keys()
+
+    if len(vehicle['route']) == 1:
+        vehicle['route_detected'] = 1
+
+
+# проверка на следование остановкам
+def check_platform(vehicle, frame):
+    if vehicle["vin"] != frame["vin"]:
+        raise VehicleDataframeError("Dataframe does not match the vehicle")
+
+    if len(around) < 1:
+        return
+
+def check_direction(vehicle, frame):
+    if vehicle["vin"] != frame["vin"]:
+        raise VehicleDataframeError("Dataframe does not match the vehicle")
+
+    platform_points = filter(
+        lambda x: x > vehicle['prev_platform_point'],
+        frame['around']['platform'][route])
+
+    len_route_points = len(route_points)
+    if len_route_points < 1:
+        raise VehicleRouteDirectionError('No nearest route points found')
+    if len_route_points >= 1
+
+    vehicle['prev_platform_point'] = frame['around']['platform'][route][0]
+
+

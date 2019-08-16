@@ -14,6 +14,10 @@ class KeeperFrameError(KeeperError):
     pass
 
 
+class KeeperFrameTypeError(KeeperError):
+    pass
+
+
 class KeeperFrameStructureError(KeeperFrameError):
     pass
 
