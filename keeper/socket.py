@@ -14,9 +14,7 @@ class Socket:
             s.connect(self.path)
 
     def read(self):
-        data = self._socket.recv(65535)
-        assert data, "Connection closed"
-        return data
+        return self._socket.recv(65535)
 
     def has_socket(self):
         result = True
