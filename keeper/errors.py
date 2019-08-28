@@ -28,3 +28,11 @@ class KeeperVehicleError(KeeperError):
 
 class KeeperVehicleRegistrationError(KeeperVehicleError):
     pass
+
+
+class KeeperBackendError(KeeperError):
+    pass
+
+
+class KeeperBackendConnectionError(KeeperBackendError):
+    pass

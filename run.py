@@ -1,2 +1,66 @@
+#!/usr/bin/env python
+
+import argparse
+import asyncio
+import websockets
+import json
+from json.decoder import JSONDecodeError
+
+from keeper import Keeper
+from keeper.frame import Frame
+from keeper.geodetector import get_geodetector
+from keeper import errors
+
+
+async def start_keeper(params):
+    try:
+        geodetector = get_geodetector(params)
+        frame_engine = Frame(geodetector)
+        keeper = Keeper(frame_engine)
+    except Exception:
+        pass
+
+    uri = f"ws://{params.wsaddr}{params.wspath}:{params.wsport}"
+    async with websockets.connect(uri) as websocket:
+        while True:
+            message = await websocket.recv()
+            try:
+                keeper.serve(json.loads(message))
+            except JSONDecodeError:
+                # todo logging
+                pass
+            except rediserror.ConnectionError as e:
+                #todo перенести экесепшен в драйвер геодетектора
+                pass
+
 if __name__ == "__main__":
-    pass
+    args_parser = argparse.ArgumentParser()
+    args_parser.add_argument('--wsaddr', default='127.0.0.1', help='IP address for websocket ws')
+    args_parser.add_argument('--wspath', default='', help='Path to websocket')
+    args_parser.add_argument('--wsport', default=8080, help='Port for websocket ws')
+    args_parser.add_argument('--ssl', action='store_true', help='Currentlu this option not implemented')
+    args_parser.add_argument('--geobackend', default='redis', help='Backend to be used to determine the geodata')
+    args_parser.add_argument('--location', required=True, help='The location name on which the database is configured')
+    args_parser.add_argument('--rradius',  required=True, help='Radius around the route point at which registered geo points will be searched')
+    args_parser.add_argument('--runit', default='m', help='Unit of the route point radius')
+    args_parser.add_argument('--pradius',  required=True, help='Radius around the platform point at which registered geo points will be searched')
+    args_parser.add_argument('--punit', default='m', help='Unit of the platform point radius')
+    args_parser.add_argument('--gbhost',  default='localhost', help='The geodetector database host')
+    args_parser.add_argument('--gbport', required=True, help='The geodetector database port')
+    args_parser.add_argument('--gbuser',  default=None, help='The geodetector database user')
+    args_parser.add_argument('--gbpass',  default=None, help='The geodetector database password')
+    args_parser.add_argument('--gbdb',  default=None, help='The geodetector database name/index. Depended at geobakend')
+    args_parser.add_argument('--gbdshost',  default='localhost', help='The geodetector database source of data host')
+    args_parser.add_argument('--gbdsport', required=True, help='The geodetector database source of data port')
+    args_parser.add_argument('--gbdsuser',  default=None, help='The geodetector database source of data user')
+    args_parser.add_argument('--gbdspass',  default=None, help='The geodetector database source of data password')
+    args_parser.add_argument('--gbdsdb',  default=None, help='The geodetector database source of data name/index')
+    args_parser.add_argument('-d', '--debug', action='store_true', help='Debug mode turn on')
+
+    run_params = args_parser.parse_args()
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(start_keeper(run_params))
+    except KeyboardInterrupt:
+        print("Keyboard interrupt signal accepted. Stopping")
+        loop.close()

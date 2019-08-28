@@ -1,20 +1,17 @@
 import json
 from .frame import Frame
 from .vehicles import Vehicles
-from .errors import *
+import keeper.errors as error
 
 
 class Keeper:
-    def __init__(self):
+    def __init__(self, frame_engine):
         self.vehicles = Vehicles()
+        self.frame = frame_engine
 
-    def serve(self, message):
+    def serve(self, data):
         try:
-            # получили вместо JSO>N строки  байты, декодируем
-            if isinstance(message, bytes):
-                message = message.decode("utf-8")
-
-            for f in Frame(json.loads(message)):
+            for f in self.frame.get_frames(data):
                 # Регистрируем транспорт если он не зарегистрирован.
                 # Возвращаем ссылку на зарегистрированный транспорт
                 vehicle = self.vehicles.produce(f)
@@ -28,5 +25,7 @@ class Keeper:
                     # иначе пытаемся определить маршрут
                     vehicle.detect_route()
 
-        except KeeperError:
+        except error.KeeperFrameTypeError:
+            pass
+        except error.KeeperError:
             pass

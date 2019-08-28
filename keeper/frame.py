@@ -1,20 +1,46 @@
-from .errors import *
+import keeper.errors as error
 
 
 class Frame:
-    _fields = {'vin', 'speed', 'longitude', 'latitude'}
+    _base_fields = {"time", "uid", "datetime", "posinfo"}
+    _posinfo_fields = {"longitude", "latitude", "altitude", "speed", "course", "satellites"}
 
-    def __init__(self, raw):
-        if not isinstance(raw, (dict, list, tuple)):
-            raise KeeperFrameTypeError()
+    def __init__(self, geodetector):
+        self.gd = geodetector
 
-        if isinstance(raw, dict):
-            raw = [raw]
+    def get_frames(self, raw_data):
+        if not isinstance(raw_data, (dict, list, tuple)):
+            raise error.KeeperFrameTypeError
 
-        self._data = (bit for bit in raw if self._is_valid(bit))
+        raw_data = raw_data if isinstance(raw_data, dict) else [raw_data]
 
-    def __iter__(self):
-        return iter(self._data)
+        data = [{**bit, **bit.pop("posinfo")} for bit in raw_data if self._is_valid(bit)]
+        return ({**bit, bit["around"]: self.get_araound(bit)} for bit in data)
 
-    def _is_valid(self, bit):
-        return self._fields.issubset(bit.keys())
+    def _is_valid(self, data):
+        # все нужные поля должны присутствовать.
+        # В идеале, валидация типов тоже нужна.
+        content_is_valid = all([
+            self._base_fields.issubset(data.keys()),
+            self._posinfo_fields.issubset(data["posinfo"].keys())
+        ])
+
+        if not content_is_valid:
+            # todo logging on error.KeeperFrameStructureError
+            pass
+
+        return content_is_valid
+
+    def get_araound(self, posinfo):
+        # around = dict()
+
+        points = self.gd.georadius(posinfo["longitude"], posinfo["latitude"])
+        return points
+
+        # for point in [point.split('_') for point in points]:
+        #     if point[0] not in around:
+        #         around[point[0]] = dict()
+        #     if point[1] not in around[point[0]]:
+        #         around[point[0]][point[1]] = list()
+        #
+        #     around[point[0]][point[1]].append(int(point[2]))

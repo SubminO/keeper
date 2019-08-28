@@ -27,42 +27,57 @@ class Vehicle:
         return True if len(self._route) == 1 else False
 
     @property
-    def vin(self):
-        return self._data['vin']
+    def uin(self):
+        return self._data['uin']
 
     @property
     def longitude(self):
         return self._data['longitude']
 
-    @longitude.setter
-    def longitude(self, value):
-        self._data['longitude'] = value
+    # @longitude.setter
+    # def longitude(self, value):
+    #     self._data['longitude'] = value
 
     @property
     def latitude(self):
         return self._data['latitude']
 
-    @latitude.setter
-    def latitude(self, value):
-        self._data['latitude'] = value
+    # @latitude.setter
+    # def latitude(self, value):
+    #     self._data['latitude'] = value
 
     @property
     def speed(self):
         return self._data['speed']
 
-    @speed.setter
-    def speed(self, value):
-        self._data['speed'] = value
+    # @speed.setter
+    # def speed(self, value):
+    #     self.last_speed = self._data['speed']
+    #     self._data['speed'] = value
 
     @property
     def route(self):
         return self._route
 
-    @route.setter
-    def route(self, value):
-        pass
+    # @route.setter
+    # def route(self, value):
+    #     pass
 
     def detect_route(self):
+        # belong = vehicle["route"].isdisjoint(set(frame['around']['route'].keys()))
+        #
+        # # маршрут не определен, кол-во нарушений не превысило критический порог
+        # if belong and vehicle["route_violation"] < app.config.max_route_violations:
+        #     vehicle["route_violation"] + +
+        # # маршрут не определен, кол-во нарушений превысило критический порог
+        # else if belong and vehicle["route_violation"] >= app.config.max_route_violations:
+        #     raise VehicleRouteDetectError("Route detection error")
+        #
+        # vehicle['route'] = vehicle['route'] & frame['around']['route'].keys()
+        #
+        # if len(vehicle['route']) == 1:
+        #     vehicle['route_detected'] = 1
+
         pass
 
     def check_route(self):
@@ -74,17 +89,20 @@ class Vehicle:
     def check_direction(self):
         pass
 
+    def update(self, new_data):
+        return self
+
 
 class Vehicles:
     def __init__(self):
         self._vehicles = dict()
 
     def register(self, data):
-        self._vehicles[data["vin"]] = Vehicle(data)
-        return self._vehicles[data['vin']]
+        self._vehicles[data["uin"]] = Vehicle(data)
+        return self._vehicles[data['uin']]
 
     def produce(self, data):
-        if data['vin'] in self._vehicles:
-            return self._vehicles[data['vin']]
+        if data['uin'] in self._vehicles:
+            return self._vehicles[data['uin']].update(data)
         else:
             return self.register(data)
