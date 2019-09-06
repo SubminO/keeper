@@ -1,4 +1,4 @@
-import keeper.errors as error
+from keeper import error
 
 
 class Frame:

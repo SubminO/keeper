@@ -6,18 +6,22 @@ import websockets
 import json
 from json.decoder import JSONDecodeError
 
-from keeper import Keeper
+from keeper import Keeper, error
 from keeper.frame import Frame
 from keeper.geodetector import get_geodetector
-from keeper import errors
 
 
 async def start_keeper(params):
+    keeper = None
+
     try:
         geodetector = get_geodetector(params)
         frame_engine = Frame(geodetector)
         keeper = Keeper(frame_engine)
-    except Exception:
+    except error.KeeperBackendConnectionError as e:
+        # todo организовать обработку прочик исключений
+        pass
+    except error.KeeperError:
         pass
 
     uri = f"ws://{params.wsaddr}{params.wspath}:{params.wsport}"
@@ -29,9 +33,8 @@ async def start_keeper(params):
             except JSONDecodeError:
                 # todo logging
                 pass
-            except rediserror.ConnectionError as e:
-                #todo перенести экесепшен в драйвер геодетектора
-                pass
+            except error.KeeperError as e:
+                print(e)
 
 if __name__ == "__main__":
     args_parser = argparse.ArgumentParser()

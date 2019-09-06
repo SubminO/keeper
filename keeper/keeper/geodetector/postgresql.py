@@ -1,4 +1,4 @@
-import keeper.errors as error
+import psycopg2
 
 
 class Postgresql:
