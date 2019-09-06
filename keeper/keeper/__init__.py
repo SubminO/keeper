@@ -13,27 +13,19 @@ class Keeper:
             for f in self.frame.get_frames(data):
                 # Регистрируем транспорт если он не зарегистрирован.
                 # Возвращаем ссылку на зарегистрированный транспорт
-                try:
-                    vehicle = self.vehicles.produce(f)
+                vehicle = self.vehicles.produce(f)
 
-                    if vehicle.route_detected:
-                        # только для ТС с определенным маршрутом
-                        # можно проверять маршрут и остановки
-                        vehicle.check_speed()
-                        vehicle.check_route()
-                        vehicle.check_direction()
-                    else:
-                        # иначе пытаемся определить маршрут
-                        vehicle.detect_route()
+                if vehicle.route_detected:
+                    # только для ТС с определенным маршрутом
+                    # можно проверять маршрут и остановки
+                    vehicle.check_speed()
+                    vehicle.check_route()
+                    vehicle.check_direction()
+                else:
+                    # иначе пытаемся определить маршрут
+                    vehicle.detect_route()
 
-                except error.KeeperVehicleSpeedError:
-                    pass
-                except error.KeeperVehicleRouteError:
-                    pass
-                except error.KeeperVehicleRouteDetectRetriesError:
-                    pass
-                except error.KeeperVehicleRouteDetectLostError:
-                    pass
+            self.vehicles.garbage_collector()
 
         except error.KeeperFrameTypeError:
             pass
