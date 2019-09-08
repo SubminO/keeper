@@ -66,12 +66,12 @@ if __name__ == "__main__":
     args_parser.add_argument('--pradius', required=True, help='Radius around the platform point at which registered geo points will be searched')
     args_parser.add_argument('--punit', default='m', help='Unit of the platform point radius')
 
-    # GEODETECTOR DATABASE SOURCE
+    # GEODETECTOR DATABASE SOURCE (Postgresql)
     args_parser.add_argument('--gbdshost', default='localhost', help='The geodetector database source of data host')
-    args_parser.add_argument('--gbdsport', required=True, help='The geodetector database source of data port')
-    args_parser.add_argument('--gbdsuser', default=None, help='The geodetector database source of data user')
-    args_parser.add_argument('--gbdspass', default=None, help='The geodetector database source of data password')
-    args_parser.add_argument('--gbdsdb', default=None, help='The geodetector database source of data name/index')
+    args_parser.add_argument('--gbdsport', default=5432, help='The geodetector database source of data port')
+    args_parser.add_argument('--gbdsuser', required=True, help='The geodetector database source of data user')
+    args_parser.add_argument('--gbdspass', required=True, help='The geodetector database source of data password')
+    args_parser.add_argument('--gbdsdb', required=True, help='The geodetector database source of data name/index')
 
     # QUEUE MESSAGES SERVICE (RabbitMQ)
     args_parser.add_argument('--rmqhost', default='localhost', help='QUeue messages service host')
