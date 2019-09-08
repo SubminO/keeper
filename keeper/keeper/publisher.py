@@ -11,24 +11,22 @@ class Publisher:
 
     async def connect(self):
         # Perform connection
-        self.conn = await connect(
-            self.dsn, loop=self.loop
-        )
+        self.conn = await connect(self.dsn, loop=self.loop)
 
         # Creating a channel
         self.channel = await self.conn.channel()
 
     async def push(self, violation, critical=False):
         try:
-            routes = list(violation.vehicle.around["route"].keys())
-
             # Sending the message
             message = json.dumps({
                 "violation": violation.name,
                 "uid": violation.vehicle.uid,
                 "speed": violation.vehicle.speed,
                 "route": violation.vehicle.route,
-                "routes": routes,
+                "datetime": violation.vehicle.datetime,
+                "longitude": violation.vehicle.longitude,
+                "latitude": violation.vehicle.latitude,
                 "critical": critical,
             })
 

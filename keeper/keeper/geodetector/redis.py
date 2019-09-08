@@ -1,5 +1,5 @@
-import redis
 import psycopg2
+import redis
 from keeper import error
 
 
@@ -15,11 +15,11 @@ class Detector:
         self.punit = punit
 
         # Geodetector backend
-        self._redis = None
+        self._dbh = None
         self.host = host
         self.port = port
         self.password = password
-        self.db = db
+        self.dbx = db
 
         # Geodetector data source
         self.gbdshost = gbdshost
@@ -30,16 +30,16 @@ class Detector:
 
     def connect(self):
         try:
-            self._redis = redis.Redis(host=self.host,
-                                      port=self.port,
-                                      db=self.db,
-                                      password=self.password)
+            self._dbh = redis.Redis(host=self.host,
+                                    port=self.port,
+                                    db=self.dbx,
+                                    password=self.password)
 
         except Exception as e:
             raise error.KeeperBackendConnectionError(e)
 
     def load_geodata(self):
-        return None
+        # return None
 
         # todo зхагрузка геоданных с базы источника
         conn = None
@@ -61,10 +61,19 @@ class Detector:
 
     def reload_geodata(self, force=False):
         # todo перезагрузка геоданных из базы источника
-        try:
-            pass
-        except Exception as e:
-            raise error.KeeperBackendReloadDataError(e)
+        pass
 
-    def georadius(self, *args, **kwargs):
-        return []
+    def georadius(self, longitude, latitude):
+        geospatial = [longitude, latitude]
+
+        route_points = [tuple(p.decode().split("_")) for p in self._dbh.georadius(f"{self.location}_route",
+                                                                                  *geospatial,
+                                                                                  self.rradius,
+                                                                                  self.runit)]
+
+        platform_points = [tuple(p.decode().split("_")) for p in self._dbh.georadius(f"{self.location}_platform",
+                                                                                     *geospatial,
+                                                                                     self.pradius,
+                                                                                     self.punit)]
+
+        return route_points, platform_points

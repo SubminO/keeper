@@ -3,13 +3,18 @@ from keeper.violation import Violation
 
 
 class Vehicle:
-    __slots__ = ("uid", "speed", "around", "route_violation", "_route_detect_retries", "speed_violation", "publisher",
-                 "direction_violation", "route_lost_violation", "_route", "_prev_irps", "_prev_route_points")
+    __slots__ = ("uid", "speed", "around", "time", "datetime", "longitude", "latitude",
+                 "route_violation", "speed_violation", "direction_violation", "route_lost_violation",
+                 "_route_detect_retries", "_route", "_prev_irps", "_prev_route_points", "publisher")
 
     def __init__(self, data, publisher):
         self.uid: str = data['uid']
         self.speed: int = data['speed']
         self.around: dict = data['around']
+        self.time: int = data['time']
+        self.datetime: str = data['datetime']
+        self.longitude: float = data['longitude']
+        self.latitude: float = data['latitude']
 
         self.route_violation = Violation(publisher.push, 'route_violation', self, MAX_ROUTE_VIOLATIONS)
         self.route_lost_violation = Violation(publisher.push, 'route_lost_violation', self, MAX_ROUTE_DETECT_LOSTS)
