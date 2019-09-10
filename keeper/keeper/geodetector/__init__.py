@@ -12,7 +12,7 @@ def get_geodetector(params):
 
         try:
             geodetector.connect()
-            geodetector.load_geodata()
+            geodetector.reload_geodata(force=True)
         except error.KeeperBackendConnectionError as e:
             raise error.KeeperBackendFatalError(e)
         except error.KeeperBackendLoadDataError as e:

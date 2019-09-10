@@ -75,8 +75,9 @@ class Detector:
             conn.close()
 
     def reload_geodata(self, force=False):
-        # todo перезагрузка геоданных из базы источника
-        pass
+        if force:
+            self._dbh.zrem(self.location)
+            self.load_geodata()
 
     def georadius(self, longitude, latitude):
         geospatial = [longitude, latitude]
