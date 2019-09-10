@@ -15,7 +15,7 @@ class Detector:
         self.punit = punit
 
         # Geodetector backend
-        self._dbh = None
+        self._dbh: redis.Redis
         self.host = host
         self.port = port
         self.password = password
@@ -38,9 +38,7 @@ class Detector:
         except Exception as e:
             raise error.KeeperBackendConnectionError(e)
 
-    def load_geodata(self):
-        # return None
-
+    def load_geodata(self) -> None:
         # todo зхагрузка геоданных с базы источника
         conn = None
         cursor = None
@@ -53,7 +51,24 @@ class Detector:
                                     port=self.gbdsport)
 
             cursor = conn.cursor()
-        except redis.exceptions.ConnectionError as e:
+
+            cursor.execute(
+                "SELECT r.name, rp.order_number, rp.longitude, rp.latitude FROM route_point rp"
+                " INNER JOIN route r ON (rp.route_id = r.id)"
+                " WHERE rp.longitude IS NOT NULL AND rp.latitude IS NOT NULL"
+                "   AND rp.order_number IS NOT NULL AND rp.route_id IS NOT NULL "
+            )
+            self._geoadd(f"{self.location}_route", cursor.fetchall())
+
+            cursor.execute(
+                "SELECT r.name, rp.order_number, rp.longitude, rp.latitude FROM route_point rp"
+                " INNER JOIN route r ON (rp.route_id = r.id)"
+                " WHERE rp.longitude IS NOT NULL AND rp.latitude IS NOT NULL AND rp.order_number IS NOT NULL"
+                "   AND  rp.route_id IS NOT NULL AND rp.route_platform_id IS NOT NULL"
+            )
+            self._geoadd(f"{self.location}_platform", cursor.fetchall())
+
+        except Exception as e:
             raise error.KeeperBackendLoadDataError(e)
         finally:
             cursor.close()
@@ -77,3 +92,10 @@ class Detector:
                                                                                      self.punit)]
 
         return route_points, platform_points
+
+    def _geoadd(self, name, items):
+        geospatials = []
+        for route, number, lon, lat in items:
+            geospatials.extend([lon, lat, f"{route}_{number}"])
+
+        self._dbh.geoadd(name, *geospatials)
