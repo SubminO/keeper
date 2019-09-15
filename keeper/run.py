@@ -6,21 +6,27 @@ import websockets
 import json
 from json.decoder import JSONDecodeError
 
-from keeper import Keeper, error
+from keeper import Keeper
+from keeper import error
 from keeper.frame import Frame
 from keeper.geodetector import get_geodetector
-from keeper.publisher import Publisher
+from keeper.backend import Backend
+from keeper.vehicles import Vehicles
 
 
 async def start_keeper(params, _loop=None):
+    backend = None
+
     try:
-        geodetector = get_geodetector(params)
+        backend = Backend(params)
+        await backend.connect()
+
+        geodetector = get_geodetector(params, backend)
+
         frame_engine = Frame(geodetector)
+        vehicles_engine = Vehicles(backend)
 
-        publisher = Publisher(params, _loop)
-        await publisher.connect()
-
-        keeper = Keeper(frame_engine, publisher)
+        keeper = Keeper(frame_engine, vehicles_engine)
 
         uri = f"ws://{params.wsaddr}{params.wspath}:{params.wsport}"
         async with websockets.connect(uri) as websocket:
@@ -35,12 +41,13 @@ async def start_keeper(params, _loop=None):
                     print(e)
                     break
 
-        await publisher.destroy()
     except error.KeeperBackendConnectionError as e:
         # todo организовать обработку прочик исключений
         pass
     except error.KeeperError:
         pass
+    finally:
+        await backend.desctroy()
 
 
 if __name__ == "__main__":
@@ -66,12 +73,12 @@ if __name__ == "__main__":
     args_parser.add_argument('--pradius', required=True, help='Radius around the platform point at which registered geo points will be searched')
     args_parser.add_argument('--punit', default='m', help='Unit of the platform point radius')
 
-    # GEODETECTOR DATABASE SOURCE (Postgresql)
-    args_parser.add_argument('--gbdshost', default='localhost', help='The geodetector database source of data host')
-    args_parser.add_argument('--gbdsport', default=5432, help='The geodetector database source of data port')
-    args_parser.add_argument('--gbdsuser', required=True, help='The geodetector database source of data user')
-    args_parser.add_argument('--gbdspass', required=True, help='The geodetector database source of data password')
-    args_parser.add_argument('--gbdsdb', required=True, help='The geodetector database source of data name/index')
+    # DATABASE SOURCE (Postgresql)
+    args_parser.add_argument('--dbshost', default='localhost', help='The geodetector database source of data host')
+    args_parser.add_argument('--dbsport', default=5432, help='The geodetector database source of data port')
+    args_parser.add_argument('--dbsuser', required=True, help='The geodetector database source of data user')
+    args_parser.add_argument('--dbspass', required=True, help='The geodetector database source of data password')
+    args_parser.add_argument('--dbsdb', required=True, help='The geodetector database source of data name/index')
 
     # QUEUE MESSAGES SERVICE (RabbitMQ)
     args_parser.add_argument('--rmqhost', default='localhost', help='QUeue messages service host')

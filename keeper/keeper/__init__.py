@@ -1,19 +1,17 @@
-from keeper.frame import Frame
-from keeper.vehicles import Vehicles
 from keeper import error
 
 
 class Keeper:
-    def __init__(self, frame_engine, publisher):
-        self.vehicles = Vehicles(publisher)
+    def __init__(self, frame_engine, vehicles_engine):
         self.fe = frame_engine
+        self.ve = vehicles_engine
 
     async def serve(self, data):
         try:
             for f in self.fe.get_frames(data):
                 # Регистрируем транспорт если он не зарегистрирован.
                 # Возвращаем ссылку на зарегистрированный транспорт
-                vehicle = self.vehicles.produce(f)
+                vehicle = self.ve.produce(f)
 
                 if vehicle.route_detected:
                     # только для ТС с определенным маршрутом
@@ -25,7 +23,7 @@ class Keeper:
                     # иначе пытаемся определить маршрут
                     await vehicle.detect_route()
 
-            await self.vehicles.garbage_collector()
+            await self.ve.garbage_collector()
 
         except error.KeeperFrameTypeError:
             pass

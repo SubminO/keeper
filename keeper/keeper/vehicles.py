@@ -99,8 +99,10 @@ class Vehicle:
 
 
 class Vehicles:
-    def __init__(self, publisher):
-        self.publisher = publisher
+    def __init__(self, backend):
+        self.publisher = backend.publisher
+        self.dbsrc = backend.dbsrc
+
         self._vehicles = dict()
 
     def produce(self, data):

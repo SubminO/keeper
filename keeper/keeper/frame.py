@@ -16,7 +16,7 @@ class Frame:
         raw_data = [raw_data] if isinstance(raw_data, dict) else raw_data
 
         data = [{**bit, **bit.pop("posinfo")} for bit in raw_data if self._is_valid(bit)]
-        return ({**bit, bit["around"]: self.get_araound(bit)} for bit in data)
+        return ({**bit, bit["around"]: self._get_araound(bit)} for bit in data)
 
     def _is_valid(self, data):
         # все нужные поля должны присутствовать.
@@ -32,7 +32,7 @@ class Frame:
 
         return content_is_valid
 
-    def get_araound(self, posinfo) -> dict:
+    def _get_araound(self, posinfo) -> dict:
         around = {
             "route": {},
             "platform": {}

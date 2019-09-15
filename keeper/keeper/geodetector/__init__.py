@@ -2,13 +2,9 @@ from keeper.geodetector import redis, postgresql
 from keeper import error
 
 
-def get_geodetector(params):
+def get_geodetector(params, backend):
     if params.geobackend == 'redis':
-        geodetector = redis.Detector(params.location, params.rradius, params.pradius,
-                                     params.runit, params.punit, params.gbhost,
-                                     params.gbport, params.gbpass, params.gbdb,
-                                     params.gbdshost, params.gbdsport, params.gbdsuser,
-                                     params.gbdspass, params.gbdsdb)
+        geodetector = redis.Detector(params, backend.gdbsrc)
 
         try:
             geodetector.connect()

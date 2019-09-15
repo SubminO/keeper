@@ -4,17 +4,26 @@ import json
 
 class Publisher:
     def __init__(self, params, loop):
-        self.loop = loop
-        self.conn = None
-        self.channel = None
-        self.dsn = f"amqp://{params.rmquser}:{params.rmqpass}@{params.rmqhost}:{params.rmqport}/"
+        self.host = params.rmqhost
+        self.port = params.rmqport
+        self.user = params.rmquser
+        self.password = params.rmqpass
+
+        self._loop = loop
+        self._conn = None
+        self._channel = None
 
     async def connect(self):
+        dsn = f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/"
+
         # Perform connection
-        self.conn = await connect(self.dsn, loop=self.loop)
+        self._conn = await connect(dsn, loop=self._loop)
 
         # Creating a channel
-        self.channel = await self.conn.channel()
+        self._channel = await self._conn.channel()
+
+    async def destroy(self):
+        await self._conn.close()
 
     async def push(self, violation, critical=False):
         try:
@@ -30,13 +39,10 @@ class Publisher:
                 "critical": critical,
             })
 
-            await self.channel.default_exchange.publish(
+            await self._channel.default_exchange.publish(
                 Message(message.encode('utf-8')),
                 routing_key=violation.name,
             )
         except (KeyError, AttributeError, TypeError):
             # todo логирование
             pass
-
-    async def destroy(self):
-        await self.conn.close()
