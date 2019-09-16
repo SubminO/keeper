@@ -3,9 +3,9 @@ from .postgresql import Postgresql
 
 
 class Backend:
-    def __init__(self, params):
+    def __init__(self, params, loop):
         self.dbsrc = Postgresql(params)
-        self.publisher = Publisher(params)
+        self.publisher = Publisher(params, loop)
 
     async def connect(self):
         self.dbsrc.connect()

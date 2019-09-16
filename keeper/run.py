@@ -18,7 +18,7 @@ async def start_keeper(params, _loop=None):
     backend = None
 
     try:
-        backend = Backend(params)
+        backend = Backend(params, _loop)
         await backend.connect()
 
         geodetector = get_geodetector(params, backend)
@@ -47,7 +47,7 @@ async def start_keeper(params, _loop=None):
     except error.KeeperError:
         pass
     finally:
-        await backend.desctroy()
+        await backend.destroy()
 
 
 if __name__ == "__main__":

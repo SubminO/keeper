@@ -4,7 +4,7 @@ from keeper import error
 
 def get_geodetector(params, backend):
     if params.geobackend == 'redis':
-        geodetector = redis.Detector(params, backend.gdbsrc)
+        geodetector = redis.Detector(params, backend.dbsrc)
 
         try:
             geodetector.connect()

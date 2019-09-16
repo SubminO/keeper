@@ -1,9 +1,8 @@
 from keeper.settings import *
-from keeper.vehicles import Vehicle
 
 
 class Violation:
-    def __init__(self, handler, name: str, vehicle: Vehicle, max_value: int):
+    def __init__(self, handler, name: str, vehicle, max_value: int):
         self._handler = handler
         self._max_value = max_value
 

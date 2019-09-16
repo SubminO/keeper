@@ -51,7 +51,7 @@ class Detector:
 
     def reload_geodata(self, force=False):
         if force:
-            self._dbh.zrem(self.location)
+            # self._dbh.zrem(self.location)
             self.load_geodata()
 
     def georadius(self, longitude, latitude):
