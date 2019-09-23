@@ -32,6 +32,7 @@ class Publisher:
                 "violation": violation.name,
                 "uid": violation.vehicle.uid,
                 "speed": violation.vehicle.speed,
+                "geo_speed": violation.vehicle.geo_speed,
                 "route": violation.vehicle.route,
                 "datetime": violation.vehicle.datetime,
                 "longitude": violation.vehicle.longitude,

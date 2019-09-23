@@ -1,11 +1,13 @@
 from keeper.settings import *
 from keeper.violation import Violation
+from keeper.geodetector import get_distance
 
 
 class Vehicle:
-    __slots__ = ("uid", "speed", "around", "time", "datetime", "longitude", "latitude",
+    __slots__ = ("uid", "speed", "around", "time", "datetime", "longitude", "latitude", "_prev_time",
                  "route_violation", "speed_violation", "direction_violation", "route_lost_violation",
-                 "_route_detect_retries", "_route", "_prev_irps", "_prev_route_points", "publisher")
+                 "_route_detect_retries", "_route", "_prev_irps", "_prev_route_points", "publisher",
+                 "_prev_longitude", "_prev_latitude", "geo_speed")
 
     def __init__(self, data, publisher):
         self.uid: str = data['uid']
@@ -27,22 +29,34 @@ class Vehicle:
         self._route = set()
         self._route_detect_retries = 0
 
+        self._prev_time = 0
+        self._prev_longitude = 0.0
+        self._prev_latitude = 0.0
+        self.geo_speed = 0.0
+
     @property
     def route_detected(self):
         return True if len(self._route) == 1 else False
 
     @property
     def route(self):
-        return list(self._route)[0]
+        routes = list(self._route)
+        return routes[0] if self.route_detected else routes
+
+    @property
+    def restricted(self):
+        return True if self.time - self._prev_time > RESTRICTED_TIME else False
 
     def update(self, data: dict) -> None:
-        try:
-            for key, value in data.items():
-                if not key.startswith("_"):
-                    setattr(self, key, value)
-        except AttributeError:
-            # атрибуты не из слота игнорируем
-            pass
+        for key, value in data.items():
+            try:
+                setattr(self, f"_prev_{key}", getattr(self, key))
+                setattr(self, key, value)
+            except AttributeError:
+                # атрибуты не из слота игнорируем
+                pass
+
+        self._set_geo_speed()
 
     async def detect_route(self):
         # todo предусмотреть отключения автоопределения моршрута и перевода его в ручной режим
@@ -52,20 +66,19 @@ class Vehicle:
             self._route_detect_retries += 1
         else:
             # todo что делать если попытки определить маршрут закончились?
-            self._route_detect_retries = None
+            self._route_detect_retries = 0
 
         route = set(self.around['route'].keys())
 
         if route:
             await self.route_lost_violation.dec()
-
-        if not route:
+        else:
             # траспорт съехал с маршрута до определения последнего
             await self.route_lost_violation.inc()
-        elif len(self._route) > 1:
+
+        # подумать здесь
+        if len(self._route) > 1:
             self._route = self._route & route
-        else:
-            self._route = route
 
     async def check_route(self):
         """проверка следованию установленного маршрута"""
@@ -92,10 +105,19 @@ class Vehicle:
 
     async def check_speed(self):
         """проверка соблюдения скоростного режима"""
-        if self.speed < MAX_SPEED:
+        if float(self.speed) < MAX_SPEED:
             await self.speed_violation.dec()
         else:
             await self.speed_violation.inc()
+
+    def _set_geo_speed(self):
+        distance = get_distance(
+            (self._prev_longitude, self._prev_latitude),
+            (self.longitude, self.latitude)
+        )
+
+        # Speed of vehicle calculated by geospatials and time diff (km/h)
+        self.geo_speed = 3600 * distance / (self.time - self._prev_time)
 
 
 class Vehicles:
