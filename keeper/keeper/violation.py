@@ -11,13 +11,20 @@ class Violation:
         self.value = 0
 
     async def inc(self) -> None:
-        self.value += 1
+        if not self.vehicle.restricted:
+            return
+
+        if self.value < self._max_value:
+            self.value += 1
 
         if self.value >= self._max_value:
-            await self._handler(self, True)
+            await self._handler(self, "violation", True)
         else:
-            await self._handler(self, False)
+            await self._handler(self, "violation", False)
 
     async def dec(self) -> None:
+        if not self.vehicle.restricted:
+            return
+
         if self.value > 0:
             self.value = 0 if VIOLATION_STRATEGY == "FAST" else (self.value - 1)

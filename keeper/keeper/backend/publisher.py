@@ -25,7 +25,7 @@ class Publisher:
     async def destroy(self):
         await self._conn.close()
 
-    async def push(self, violation, critical=False):
+    async def push(self, routing_key, violation, critical=False):
         try:
             # Sending the message
             message = json.dumps({
@@ -41,7 +41,7 @@ class Publisher:
 
             await self._channel.default_exchange.publish(
                 Message(message.encode('utf-8')),
-                routing_key=violation.name,
+                routing_key=routing_key,
             )
         except (KeyError, AttributeError, TypeError):
             # todo логирование
