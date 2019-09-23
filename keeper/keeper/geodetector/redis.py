@@ -74,4 +74,5 @@ class Detector:
         for route, number, lon, lat in items:
             geospatials.extend([lon, lat, f"{route}_{number}"])
 
-        self._dbh.geoadd(name, *geospatials)
+        if geospatials:
+            self._dbh.geoadd(name, *geospatials)

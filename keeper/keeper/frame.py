@@ -16,21 +16,18 @@ class Frame:
         raw_data = [raw_data] if isinstance(raw_data, dict) else raw_data
 
         data = [{**bit, **bit.pop("posinfo")} for bit in raw_data if self._is_valid(bit)]
-        return ({**bit, bit["around"]: self._get_araound(bit)} for bit in data)
+        return ({**bit, "around": self._get_araound(bit)} for bit in data)
 
     def _is_valid(self, data):
         # все нужные поля должны присутствовать.
         # В идеале, валидация типов тоже нужна.
-        content_is_valid = all([
-            self._base_fields.issubset(data.keys()),
-            self._posinfo_fields.issubset(data["posinfo"].keys())
-        ])
-
-        if not content_is_valid:
-            # todo logging on error.KeeperFrameStructureError
-            pass
-
-        return content_is_valid
+        try:
+            return all([
+                self._base_fields.issubset(data.keys()),
+                self._posinfo_fields.issubset(data["posinfo"].keys())
+            ])
+        except KeyError:
+            return False
 
     def _get_araound(self, posinfo) -> dict:
         around = {
