@@ -25,23 +25,10 @@ class Publisher:
     async def destroy(self):
         await self._conn.close()
 
-    async def push(self, routing_key, violation, critical=False):
+    async def push(self, routing_key, data):
         try:
-            # Sending the message
-            message = json.dumps({
-                "violation": violation.name,
-                "uid": violation.vehicle.uid,
-                "speed": violation.vehicle.speed,
-                "geo_speed": violation.vehicle.geo_speed,
-                "route": violation.vehicle.route,
-                "datetime": violation.vehicle.datetime,
-                "longitude": violation.vehicle.longitude,
-                "latitude": violation.vehicle.latitude,
-                "critical": critical,
-            })
-
             await self._channel.default_exchange.publish(
-                Message(message.encode('utf-8')),
+                Message(json.dumps(data).encode('utf-8')),
                 routing_key=routing_key,
             )
         except (KeyError, AttributeError, TypeError):

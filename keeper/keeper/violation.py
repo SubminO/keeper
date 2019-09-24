@@ -14,13 +14,24 @@ class Violation:
         if not self.vehicle.restricted:
             return
 
+        # Sending the message
+        message = {
+            "violation": self.name,
+            "uid": self.vehicle.uid,
+            "board_speed": self.vehicle.speed,
+            "geo_speed": self.vehicle.geo_speed,
+            "route": self.vehicle.route,
+            "datetime": self.vehicle.datetime,
+            "longitude": self.vehicle.longitude,
+            "latitude": self.vehicle.latitude,
+        }
+
         if self.value < self._max_value:
             self.value += 1
 
-        if self.value >= self._max_value:
-            await self._handler(self, "violation", True)
-        else:
-            await self._handler(self, "violation", False)
+        message["critical"] = True if self.value >= self._max_value else False
+
+        await self._handler(self, "violation", message)
 
     async def dec(self) -> None:
         if not self.vehicle.restricted:
