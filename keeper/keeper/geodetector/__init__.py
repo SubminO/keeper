@@ -1,8 +1,7 @@
-from math import sin, cos, sqrt, atan2, radians
+from geographiclib.geodesic import Geodesic
 
 from keeper.geodetector import redis, postgresql
 from keeper import error
-from keeper.settings import *
 
 
 def get_geodetector(params, backend):
@@ -27,10 +26,7 @@ def get_geodetector(params, backend):
 
 
 def get_distance(prev_geospatial, cur_geospatial):
-    lon1, lat1 = prev_geospatial
-    lon2, lat2 = cur_geospatial
+    geod = Geodesic.WGS84
+    g = geod.Inverse(*prev_geospatial, *cur_geospatial, outmask=Geodesic.DISTANCE)
 
-    dlon, dlat = radians(lon2 - lon1), radians(lat2 - lat1)
-    a = sin(dlat / 2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2)**2
-
-    return EARTH_RADIUS * 2 * atan2(sqrt(a), sqrt(1 - a))
+    return g['s12'] / 1000

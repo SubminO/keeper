@@ -105,15 +105,17 @@ class Vehicle:
 
     async def check_speed(self):
         """проверка соблюдения скоростного режима"""
-        if float(self.speed) < MAX_SPEED:
-            await self.speed_violation.dec()
-        else:
+        if float(self.speed) >= MAX_SPEED:
             await self.speed_violation.inc()
+        elif self.geo_speed >= MAX_SPEED:
+            await self.speed_violation.inc()
+        else:
+            await self.speed_violation.dec()
 
     def _set_geo_speed(self):
         distance = get_distance(
-            (self._prev_longitude, self._prev_latitude),
-            (self.longitude, self.latitude)
+            (self._prev_latitude, self._prev_longitude),
+            (self.latitude, self.longitude)
         )
 
         # Speed of vehicle calculated by geospatials and time diff (km/h)
@@ -123,7 +125,6 @@ class Vehicle:
 class Vehicles:
     def __init__(self, backend):
         self.publisher = backend.publisher
-        self.dbsrc = backend.dbsrc
 
         self._vehicles = dict()
 
